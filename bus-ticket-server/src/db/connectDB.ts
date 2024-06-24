@@ -5,10 +5,10 @@ dotenv.config({ path: './.env' });
 
 // Define MySQL database connection options
 const dbConfig = {
-  host: process.env.HOST || 'localhost',
-  user: process.env.USR || 'root',
-  database: process.env.DATABASE || 'bus-ticket-db',
-  password: process.env.PASSWORD || 'Sapkale@55',
+  host: process.env.HOST,
+  user: process.env.USR,
+  database: process.env.DATABASE,
+  password: process.env.PASSWORD,
   waitForConnections: true,
   connectionLimit: 10,
   maxIdle: 10,
