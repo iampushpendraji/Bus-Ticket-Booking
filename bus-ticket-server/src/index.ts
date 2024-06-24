@@ -1,19 +1,19 @@
-import express, { Request, Response } from 'express';
+import dotenv from 'dotenv';
+import { connectDB } from './db/connectDB';
+import { app } from './app';
 
-// Create an Express application
-const app = express();
-const port = process.env.PORT || 3000;
+dotenv.config({ path: './.env' });
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const PORT = process.env.PORT || 8000;
 
-// Routes
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
-});
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+// Connecting to MySQL
+connectDB()
+    .then(() => {
+        // Start the Express server
+        app.listen(PORT, () => {
+            console.log(`Server is running at port : ${PORT}`);
+        });
+    })
+    .catch((err) => {
+        console.error('MySQL db connection failed !!! ', err);
+    });
