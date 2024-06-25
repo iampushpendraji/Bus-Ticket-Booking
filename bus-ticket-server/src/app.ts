@@ -2,10 +2,12 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import healthcheckRouter from './routes/healthcheck.routes';
+import userRouter from './routes/user.routes';
 
 
 // Initialize Express application
 const app: Express = express();
+
 
 // Middleware
 app.use(cors({
@@ -17,12 +19,16 @@ app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(express.static('public'));
 app.use(cookieParser());
 
+
 // Routes
 app.use('/api/v1/healthcheck', healthcheckRouter);
+app.use('/api/v1/user', userRouter);
+
 
 // Example route
 app.get('/', (req: Request, res: Response) => {
   res.send('Welcome to my TypeScript Express application');
 });
+
 
 export { app };

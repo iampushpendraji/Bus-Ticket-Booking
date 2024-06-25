@@ -1,9 +1,9 @@
-import mysql, { Pool } from 'mysql2';
+import mysql, { Pool, PoolConnection } from 'mysql2/promise';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: './.env' });
 
-// Define MySQL database connection options
+// MySQL database connection options from environment variables
 const dbConfig = {
   host: process.env.HOST,
   user: process.env.USR,
@@ -23,15 +23,16 @@ const pool: Pool = mysql.createPool(dbConfig);
 
 // Function to establish database connection
 const connectDB = (): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        return reject(err);
-      }
-      connection.release(); // Release the connection back to the pool
-      resolve();
-    });
-  });
+  return new Promise(async (res, rej) => {
+    try {
+      const connection: PoolConnection = await pool.getConnection();
+      connection.release();
+      res();
+    }
+    catch(err) {
+      rej(err);
+    } 
+  })
 };
 
 export { connectDB, pool };
