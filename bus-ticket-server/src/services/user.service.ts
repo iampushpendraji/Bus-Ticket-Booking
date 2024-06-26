@@ -51,4 +51,18 @@ async function getBcryptPassword(password: string): Promise<string> {
     return await bcrypt.hash(password, 10);
 }
 
-export { getUserDetails, generateToken, getBcryptPassword };
+
+/**
+ * 
+ * @name : validatePassword
+ * @Desc : For validating password
+ * 
+ */
+
+
+async function validatePassword(bcrypted_password: string, password: string): Promise<boolean> {
+    let passCheck = await bcrypt.compare(password, bcrypted_password);  // Validating password here
+    return passCheck;
+}
+
+export { getUserDetails, generateToken, getBcryptPassword, validatePassword };

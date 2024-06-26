@@ -5,22 +5,22 @@ import { UserType } from "../interfaces/user.interface";
 
 /**
  * 
- * @name : checkEmailExists
- * @Desc : For checking existing email
+ * @name : getUserFromEmail
+ * @Desc : For getting user's details on the basis of email
  * 
  */
 
 
-async function checkEmailExists(user_email: string): Promise<boolean> {
+async function getUserFromEmail(user_email: string): Promise<RowDataPacket[]> {
     const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users WHERE user_email = ?', [user_email]);
-    return rows.length ? true: false;
+    return rows;
 }
 
 
 /**
  * 
  * @name : checkPhoneExists
- * @Desc : For checking existing phone number
+ * @Desc : For checking phone number exists in table
  * 
  */
 
@@ -73,4 +73,19 @@ async function setAccessToken(newAccessToken: { access_token: string, refresh_to
 }
 
 
-export { checkEmailExists, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken };
+/**
+ * 
+ * @name : updateAccessToken
+ * @Desc : 
+ * - For updating new access token into DB
+ * - We will use it for replacing expired access token with new access token
+ * 
+ */
+
+
+async function updateAccessToken(newAccessToken: { access_token: string, refresh_token_id: number, user_id: number, created_on: string, updated_on: string }): Promise<number> {
+    const [rows] = await pool.query<ResultSetHeader>('UPDATE auth_access_token SET ? WHERE refresh_token_id = ?', [newAccessToken, newAccessToken.refresh_token_id]);
+    return rows.insertId;
+}
+
+export { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken };
