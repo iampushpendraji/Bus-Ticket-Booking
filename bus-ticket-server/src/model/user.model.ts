@@ -103,4 +103,18 @@ async function getRefreshTokenIdFromRefreshToken(refresh_token: string, user_id:
 }
 
 
-export { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken };
+/**
+ * 
+ * @name : getRefreshTokenIdFromRefreshToken
+ * @Desc : For getting refresh_token_id from refresh token
+ * 
+ */
+
+
+async function deleteRefreshTokenFromRefreshTokenId(refresh_token_id: number): Promise<ResultSetHeader> {
+    const [rows] = await pool.query<ResultSetHeader>('DELETE FROM auth_refresh_token WHERE id = ?', [refresh_token_id]);
+    return rows;
+}
+
+
+export { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken, deleteRefreshTokenFromRefreshTokenId };

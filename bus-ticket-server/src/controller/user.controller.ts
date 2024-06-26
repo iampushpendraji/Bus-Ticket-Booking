@@ -3,7 +3,7 @@ import { RowDataPacket } from 'mysql2/promise';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
 import { asyncHandler } from '../utils/asyncHandler';
-import { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken } from '../model/user.model';
+import { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken, deleteRefreshTokenFromRefreshTokenId } from '../model/user.model';
 import { getUserDetails, getBcryptPassword, generateToken, validatePassword, getUserFromToken } from '../services/user.service';
 import { TokenUserDetail, UserType } from '../interfaces/user.interface';
 
@@ -97,4 +97,28 @@ const accessTokenFromRefreshToken = asyncHandler(async (req: Request, res: Respo
   return res.status(200).json(new ApiResponse(200, { user_id: userDetails.user_id, refresh_token: refresh_token, access_token: newAccessToken }, "Generated access token successfully !!"));
 });
 
-export { register, login, accessTokenFromRefreshToken };
+
+/**
+ * 
+ * @name : logout
+ * @route : /api/v1/user/logout
+ * @Desc : 
+ * - For deleting refresh token
+ * - For deleting access token related to refresh token
+ * 
+ */
+
+
+const logout = asyncHandler(async (req: Request, res: Response) => {
+  let { refresh_token } = req.body;
+
+  let userDetails: TokenUserDetail = getUserFromToken(refresh_token as string, "refresh_token");    // Reading user details from given refresh token
+  
+  let findRefreshToken: RowDataPacket[] = await getRefreshTokenIdFromRefreshToken(refresh_token as string, userDetails.user_id);   // Finding refresh token exists or not in table
+  if (findRefreshToken.length == 0) return res.status(400).json(new ApiError(400, "Refresh token does not exists !!"));
+
+  await deleteRefreshTokenFromRefreshTokenId(findRefreshToken[0].id);   // Deleting refresh token it will also delete accesstoken because cascade delete
+  return res.status(200).json(new ApiResponse(200, {}, "User logged out successfully !!"));
+});
+
+export { register, login, accessTokenFromRefreshToken, logout };
