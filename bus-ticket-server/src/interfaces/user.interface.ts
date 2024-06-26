@@ -10,4 +10,9 @@ interface UserType {
     is_active?: 0 | 1
 }
 
-export { UserType }
+interface TokenUserDetail { 
+    user_id: number, 
+    user_type: string 
+}
+
+export { UserType, TokenUserDetail }

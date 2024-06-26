@@ -83,9 +83,24 @@ async function setAccessToken(newAccessToken: { access_token: string, refresh_to
  */
 
 
-async function updateAccessToken(newAccessToken: { access_token: string, refresh_token_id: number, user_id: number, created_on: string, updated_on: string }): Promise<number> {
+async function updateAccessToken(newAccessToken: { access_token: string, refresh_token_id: number, user_id: number, updated_on: string }): Promise<number> {
     const [rows] = await pool.query<ResultSetHeader>('UPDATE auth_access_token SET ? WHERE refresh_token_id = ?', [newAccessToken, newAccessToken.refresh_token_id]);
     return rows.insertId;
 }
 
-export { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken };
+
+/**
+ * 
+ * @name : getRefreshTokenIdFromRefreshToken
+ * @Desc : For getting refresh_token_id from refresh token
+ * 
+ */
+
+
+async function getRefreshTokenIdFromRefreshToken(refresh_token: string, user_id: number): Promise<RowDataPacket[]> {
+    const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM auth_refresh_token WHERE refresh_token = ? AND user_id = ?', [refresh_token, user_id]);
+    return rows;
+}
+
+
+export { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken };

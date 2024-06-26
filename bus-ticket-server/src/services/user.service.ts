@@ -1,4 +1,4 @@
-import { UserType } from "../interfaces/user.interface";
+import { UserType, TokenUserDetail } from "../interfaces/user.interface";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -65,4 +65,19 @@ async function validatePassword(bcrypted_password: string, password: string): Pr
     return passCheck;
 }
 
-export { getUserDetails, generateToken, getBcryptPassword, validatePassword };
+
+/**
+ * 
+ * @name : getUserFromToken
+ * @Desc : For getting user details from token
+ * 
+ */
+
+
+function getUserFromToken(token: string, token_type: string): TokenUserDetail {
+    let token_key: string = token_type === "refresh_token" ? process.env.REFRESH_TOKEN_KEY as string : process.env.ACCESS_TOKEN_KEY as string;
+    let data: TokenUserDetail = jwt.verify(token, token_key) as TokenUserDetail;
+    return data;
+}
+
+export { getUserDetails, generateToken, getBcryptPassword, validatePassword, getUserFromToken };
