@@ -5,8 +5,8 @@ interface UserType {
     user_email: string,
     user_phone: string,
     password: string,
-    created_on?: number,
-    updated_on?: number,
+    created_on?: string,
+    updated_on?: string,
     is_active?: 0 | 1
 }
 

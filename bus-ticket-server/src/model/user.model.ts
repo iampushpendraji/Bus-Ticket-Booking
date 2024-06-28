@@ -105,6 +105,20 @@ async function getRefreshTokenIdFromRefreshToken(refresh_token: string, user_id:
 
 /**
  * 
+ * @name : deleteAllRefreshTokenOfUser
+ * @Desc : For deleting all refresh_token_id from refresh token it will also delete all access_token also from DB because of cascade
+ * 
+ */
+
+
+async function deleteAllRefreshTokenOfUser(user_id: number): Promise<RowDataPacket[]> {
+    const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM auth_refresh_token WHERE user_id = ?', [user_id]);
+    return rows;
+}
+
+
+/**
+ * 
  * @name : getRefreshTokenIdFromRefreshToken
  * @Desc : For getting refresh_token_id from refresh token
  * 
@@ -117,4 +131,4 @@ async function deleteRefreshTokenFromRefreshTokenId(refresh_token_id: number): P
 }
 
 
-export { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken, deleteRefreshTokenFromRefreshTokenId };
+export { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken, deleteRefreshTokenFromRefreshTokenId, deleteAllRefreshTokenOfUser };

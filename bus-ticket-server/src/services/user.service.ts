@@ -1,6 +1,7 @@
 import { UserType, TokenUserDetail } from "../interfaces/user.interface";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { getCurrentUTCTime } from "../utils/commonUtilites";
 
 
 /**
@@ -19,8 +20,8 @@ function getUserDetails(body: UserType): UserType {
         user_email: body.user_email,
         user_phone: body.user_phone,
         password: body.password,
-        created_on: new Date().getTime(),
-        updated_on: new Date().getTime(),
+        created_on: getCurrentUTCTime(),
+        updated_on: getCurrentUTCTime(),
         is_active: 1
     };
 }
@@ -47,8 +48,24 @@ function generateToken(user_id: number, user_type: string, token_key: string, ex
  */
 
 
-async function getBcryptPassword(password: string): Promise<string> {
-    return await bcrypt.hash(password, 10);
+async function getBcryptPassword(password: string, token_key: string): Promise<string> {
+    const hashedPassword: string = await bcrypt.hash(password, 10);
+    const token: string = jwt.sign(hashedPassword, token_key);
+    return token;
+}
+
+
+/**
+ * 
+ * @name : decryptPassword
+ * @Desc : For decrypting password
+ * 
+ */
+
+
+function decryptPassword(password: string, token_key: string): string {
+    let data: string = jwt.verify(password, token_key) as string;
+    return data;
 }
 
 
@@ -60,8 +77,10 @@ async function getBcryptPassword(password: string): Promise<string> {
  */
 
 
-async function validatePassword(bcrypted_password: string, password: string): Promise<boolean> {
-    let passCheck = await bcrypt.compare(password, bcrypted_password);  // Validating password here
+async function validatePassword(db_password: string, user_password: string, token_key: string): Promise<boolean> {
+    let pass1 = decryptPassword(db_password, token_key);    // It will be bcrypted password
+    let pass2 = decryptPassword(user_password, token_key);      // It will be string
+    let passCheck = await bcrypt.compare(pass2, pass1);  // Validating password here
     return passCheck;
 }
 
@@ -80,4 +99,4 @@ function getUserFromToken(token: string, token_type: string): TokenUserDetail {
     return data;
 }
 
-export { getUserDetails, generateToken, getBcryptPassword, validatePassword, getUserFromToken };
+export { getUserDetails, generateToken, getBcryptPassword, validatePassword, getUserFromToken, decryptPassword };
