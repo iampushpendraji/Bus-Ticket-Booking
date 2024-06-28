@@ -3,3 +3,8 @@
 // USR=<root>
 // DATABASE=<Your-DB>
 // PASSWORD=<Your-Pass>
+// REFRESH_TOKEN_KEY=<Your-Ref-Token-Key>
+// REFRESH_EXPIRY=<Time>
+// ACCESS_TOKEN_KEY=<Your-Access-Token-Key>
+// ACCESS_EXPIRY=<Time>
+// PASSWORD_TOKEN_KEY=<Password-Token-Key>  ** It should be same as ui side code

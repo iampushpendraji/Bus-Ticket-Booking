@@ -49,8 +49,8 @@ function generateToken(user_id: number, user_type: string, token_key: string, ex
 
 
 async function getBcryptPassword(password: string, token_key: string): Promise<string> {
-    const hashedPassword: string = await bcrypt.hash(password, 10);
-    const token: string = jwt.sign(hashedPassword, token_key);
+    const hashed_password: string = await bcrypt.hash(password, 10);
+    const token: string = jwt.sign(hashed_password, token_key);
     return token;
 }
 
@@ -63,9 +63,14 @@ async function getBcryptPassword(password: string, token_key: string): Promise<s
  */
 
 
-function decryptPassword(password: string, token_key: string): string {
-    let data: string = jwt.verify(password, token_key) as string;
-    return data;
+function decryptPassword(password: string, token_key: string): { status: boolean, pass: string, error_message?: string } {
+    try {
+        let data: string = jwt.verify(password, token_key) as string;
+        return { status: true, pass: data };
+    }
+    catch (err) {
+        return { status: false, pass: '', error_message: 'Please send encrypted password !!' };
+    }
 }
 
 
@@ -79,8 +84,10 @@ function decryptPassword(password: string, token_key: string): string {
 
 async function validatePassword(db_password: string, user_password: string, token_key: string): Promise<boolean> {
     let pass1 = decryptPassword(db_password, token_key);    // It will be bcrypted password
+    if (!pass1.status) return false;
     let pass2 = decryptPassword(user_password, token_key);      // It will be string
-    let passCheck = await bcrypt.compare(pass2, pass1);  // Validating password here
+    if (!pass2.status) return false;
+    let passCheck = await bcrypt.compare(pass2.pass, pass1.pass);  // Validating password here
     return passCheck;
 }
 

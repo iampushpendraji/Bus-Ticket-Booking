@@ -12,5 +12,4 @@ router.route('/logout').post(logout);
 router.route('/logoutAll').post(logoutAll);
 
 
-
 export default router;

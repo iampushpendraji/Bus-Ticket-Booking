@@ -1,48 +1,72 @@
 import { Request, Response } from 'express';
-import { RowDataPacket } from 'mysql2/promise';
+import { pool } from '../db/connectDB';
+import { PoolConnection } from 'mysql2/promise';
 import { ApiResponse } from '../utils/apiResponse';
 import { ApiError } from '../utils/apiError';
 import { asyncHandler } from '../utils/asyncHandler';
-import { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken, deleteRefreshTokenFromRefreshTokenId, deleteAllRefreshTokenOfUser } from '../model/user.model';
+import { getUserFromEmail, checkPhoneExists, insertNewUser, insertRefreshToken, insertAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken, deleteRefreshTokenFromRefreshTokenId, deleteAllRefreshTokenOfUser } from '../model/user.model';
 import { getUserDetails, getBcryptPassword, generateToken, validatePassword, getUserFromToken, decryptPassword } from '../services/user.service';
-import { TokenUserDetail, UserType } from '../interfaces/user.interface';
-import { getCurrentUTCTime } from '../utils/commonUtilites';
+import { getCurrentUTCTime, checkAllRequiredKeysData } from '../utils/commonUtilites';
 
 
 /**
  * 
  * @name : register
  * @route : /api/v1/user/register
- * @Desc : For inserting new user into DB
+ * @Desc : 
+ * - For inserting new user into DB
+ * - Added transitions here
  * 
  */
 
 
 const register = asyncHandler(async (req: Request, res: Response) => {
   let body = req.body;
-  let newUser: UserType = getUserDetails(body);   // Creating new user object adding user information here
-  
-  newUser.password = decryptPassword(newUser.password, process.env.PASSWORD_TOKEN_KEY as string);   // Decrypting password here
+  let required_keys = ["user_first_name", "user_type", "user_last_name", "user_email", "user_phone", "password"];
+  let check_required_data = checkAllRequiredKeysData(body, required_keys);   // Checking whether we have got all the require inputs from request
+  if (!check_required_data.status) return res.status(400).json(new ApiError(400, "Please send all the require inputs", [{ not_exists_key: check_required_data.not_exists_keys, not_exists_value: check_required_data.not_exists_value }]));
 
-  let userDetails: RowDataPacket[] = await getUserFromEmail(newUser.user_email);   // Checking whether email already exists or not
-  if (userDetails.length > 0) return res.status(400).json(new ApiError(400, "Email is already exists !!"));
+  let new_user = getUserDetails(body);   // Creating new user object adding user information here
 
-  const isPhoneExists: boolean = await checkPhoneExists(newUser.user_phone);   // Checking whether phone already exists or not
-  if (isPhoneExists) return res.status(400).json(new ApiError(400, "Phone number is already exists !!"));
+  let dcrypted_pass = decryptPassword(new_user.password, process.env.PASSWORD_TOKEN_KEY as string);   // Decrypting password here
+  if (!dcrypted_pass.status) return res.status(400).send(new ApiError(400, dcrypted_pass.error_message)); // If user put wonge password or decrypted password directly
+  new_user.password = dcrypted_pass.pass;
 
-  newUser.password = await getBcryptPassword(newUser.password, process.env.PASSWORD_TOKEN_KEY as string)  // Here we are hashing the {user_password}
+  let user_details = await getUserFromEmail(new_user.user_email);   // Checking whether email already exists or not
+  if (user_details.length > 0) return res.status(400).json(new ApiError(400, "Email is already exists !!"));
 
-  let newUserId: number = await insertNewUser(newUser);   // Here we are inserting new user in DB
+  const is_phone_exists = await checkPhoneExists(new_user.user_phone);   // Checking whether phone already exists or not
+  if (is_phone_exists) return res.status(400).json(new ApiError(400, "Phone number is already exists !!"));
 
-  let newRefreshToken: string = generateToken(newUserId, newUser.user_type, process.env.REFRESH_TOKEN_KEY as string, process.env.REFRESH_EXPIRY as string);   // Here generating json web token
-  let newAccessToken: string = generateToken(newUserId, newUser.user_type, process.env.ACCESS_TOKEN_KEY as string, process.env.ACCESS_EXPIRY as string);    // Here generating json web token
+  new_user.password = await getBcryptPassword(new_user.password, process.env.PASSWORD_TOKEN_KEY as string)  // Here we are hashing the {user_password}
 
-  let currentDateTime: string = getCurrentUTCTime();   // Getting UTC current time
+  let connection: PoolConnection | null = null;
+  try {
+    connection = await pool.getConnection();
+    let new_user_id = await insertNewUser(new_user, connection);   // Here we are inserting new user in DB
 
-  let newRefreshTokenId: number = await setRefreshToken({ refresh_token: newRefreshToken, user_id: newUserId, created_on: currentDateTime, updated_on: currentDateTime });   // Here we are setting refresh token in DB
-  let newAccessTokenId: number = await setAccessToken({ access_token: newAccessToken, refresh_token_id: newRefreshTokenId, user_id: newUserId, created_on: currentDateTime, updated_on: currentDateTime });    // Here we are setting access token in DB 
+    let new_refresh_token = generateToken(new_user_id, new_user.user_type, process.env.REFRESH_TOKEN_KEY as string, process.env.REFRESH_EXPIRY as string);   // Here generating json web token
+    let new_access_token = generateToken(new_user_id, new_user.user_type, process.env.ACCESS_TOKEN_KEY as string, process.env.ACCESS_EXPIRY as string);    // Here generating json web token
 
-  return res.status(200).json(new ApiResponse(200, { user_id: newUserId, refresh_token: newRefreshToken, access_token: newAccessToken }, "User created successfully !!"));
+    let current_date_time = getCurrentUTCTime();   // Getting UTC current time
+
+    let new_refresh_token_id = await insertRefreshToken({ refresh_token: new_refresh_token, user_id: new_user_id, created_on: current_date_time, updated_on: current_date_time }, connection);   // Here we are setting refresh token in DB
+    await insertAccessToken({ access_token: new_access_token, refresh_token_id: new_refresh_token_id, user_id: new_user_id, created_on: current_date_time, updated_on: current_date_time }, connection);    // Here we are setting access token in DB 
+
+    await connection.commit();    // Commit transaction
+    return res.status(200).json(new ApiResponse(200, { user_id: new_user_id, refresh_token: new_refresh_token, access_token: new_access_token }, "User created successfully !!"));
+  }
+  catch (err) {
+    if (connection) {
+      await connection.rollback();    // Rollback transaction on error
+      return res.status(400).json(new ApiError(400, 'Error in registrations !!'));
+    }
+  }
+  finally {
+    if (connection) {
+      connection.release();   // Released the connection finally
+    }
+  }
 });
 
 
@@ -50,28 +74,50 @@ const register = asyncHandler(async (req: Request, res: Response) => {
  * 
  * @name : login
  * @route : /api/v1/user/login
- * @Desc : For login
+ * @Desc : 
+ * - For login
+ * - Added transitions here
  * 
  */
 
 
 const login = asyncHandler(async (req: Request, res: Response) => {
   let { user_email, password } = req.body;
-  let userDetails: RowDataPacket[] = await getUserFromEmail(user_email);   // Checking whether email already exists or not
-  if (userDetails.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
+  let body = req.body;
+  let required_keys = ["user_email", "password"];
+  let check_required_input = checkAllRequiredKeysData(body, required_keys);   // Checking whether we have got all the require inputs from request
+  if (!check_required_input.status) return res.status(400).json(new ApiError(400, "Please send all the require inputs", [{ not_exists_key: check_required_input.not_exists_keys, not_exists_value: check_required_input.not_exists_value }]));
 
-  let passCheck: boolean = await validatePassword(userDetails[0].password, password, process.env.PASSWORD_TOKEN_KEY as string);   // Validating password
-  if (!passCheck) return res.status(400).json(new ApiError(400, "Password is invalid !!"));
+  let user_details = await getUserFromEmail(user_email);   // Checking whether email already exists or not
+  if (user_details.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
 
-  let newRefreshToken: string = generateToken(userDetails[0].id, userDetails[0].user_type, process.env.REFRESH_TOKEN_KEY as string, process.env.REFRESH_EXPIRY as string);   // Here generating json web token
-  let newAccessToken: string = generateToken(userDetails[0].id, userDetails[0].user_type, process.env.ACCESS_TOKEN_KEY as string, process.env.ACCESS_EXPIRY as string);    // Here generating json web token
+  let pass_check = await validatePassword(user_details[0].password, password, process.env.PASSWORD_TOKEN_KEY as string);   // Validating password
+  if (!pass_check) return res.status(400).json(new ApiError(400, "Password is invalid !!"));
 
-  let currentDateTime: string = getCurrentUTCTime();   // Getting UTC current time
+  let new_refresh_token = generateToken(user_details[0].id, user_details[0].user_type, process.env.REFRESH_TOKEN_KEY as string, process.env.REFRESH_EXPIRY as string);   // Here generating json web token
+  let new_access_token = generateToken(user_details[0].id, user_details[0].user_type, process.env.ACCESS_TOKEN_KEY as string, process.env.ACCESS_EXPIRY as string);    // Here generating json web token
 
-  let newRefreshTokenId: number = await setRefreshToken({ refresh_token: newRefreshToken, user_id: userDetails[0].id, created_on: currentDateTime, updated_on: currentDateTime });   // Here we are setting refresh token in DB
-  let newAccessTokenId: number = await setAccessToken({ access_token: newAccessToken, refresh_token_id: newRefreshTokenId, user_id: userDetails[0].id, created_on: currentDateTime, updated_on: currentDateTime });    // Here we are setting access token in DB 
+  let current_date_time = getCurrentUTCTime();   // Getting UTC current time
 
-  return res.status(200).json(new ApiResponse(200, { user_id: userDetails[0].id, refresh_token: newRefreshToken, access_token: newAccessToken }, "User authenticated successfully !!"));
+  let connection: PoolConnection | null = null;
+  try {
+    connection = await pool.getConnection();
+    let newRefreshTokenId = await insertRefreshToken({ refresh_token: new_refresh_token, user_id: user_details[0].id, created_on: current_date_time, updated_on: current_date_time }, connection);   // Here we are setting refresh token in DB
+    await insertAccessToken({ access_token: new_access_token, refresh_token_id: newRefreshTokenId, user_id: user_details[0].id, created_on: current_date_time, updated_on: current_date_time }, connection);    // Here we are setting access token in DB 
+    await connection.commit();    // Commit transaction
+    return res.status(200).json(new ApiResponse(200, { user_id: user_details[0].id, refresh_token: new_refresh_token, access_token: new_access_token }, "User authenticated successfully !!"));
+  }
+  catch (error) {
+    if (connection) {
+      await connection.rollback();    // Rollback transaction on error
+      return res.status(400).json(new ApiError(400, 'Error in login !!'));
+    }
+  }
+  finally {
+    if (connection) {
+      connection.release();   // Released the connection finally
+    }
+  }
 });
 
 
@@ -86,17 +132,21 @@ const login = asyncHandler(async (req: Request, res: Response) => {
 
 const accessTokenFromRefreshToken = asyncHandler(async (req: Request, res: Response) => {
   let { refresh_token } = req.query;
+  let body = req.query;
+  let required_keys = ["refresh_token"];
+  let check_required_input = checkAllRequiredKeysData(body, required_keys);   // Checking whether we have got all the require inputs from request
+  if (!check_required_input.status) return res.status(400).json(new ApiError(400, "Please send all the require inputs", [{ not_exists_key: check_required_input.not_exists_keys, not_exists_value: check_required_input.not_exists_value }]));
 
-  let userDetails: TokenUserDetail = getUserFromToken(refresh_token as string, "refresh_token");    // Reading user details from given refresh token
+  let user_details = getUserFromToken(refresh_token as string, "refresh_token");    // Reading user details from given refresh token
 
-  let findRefreshToken: RowDataPacket[] = await getRefreshTokenIdFromRefreshToken(refresh_token as string, userDetails.user_id);   // Finding refresh token exists or not in table
-  if (findRefreshToken.length == 0) return res.status(400).json(new ApiError(400, "Refresh token does not exists !!"));
+  let find_refresh_token = await getRefreshTokenIdFromRefreshToken(refresh_token as string, user_details.user_id);   // Finding refresh token exists or not in table
+  if (find_refresh_token.length == 0) return res.status(400).json(new ApiError(400, "Refresh token does not exists !!"));
 
-  let newAccessToken: string = generateToken(userDetails.user_id, userDetails.user_type, process.env.ACCESS_TOKEN_KEY as string, process.env.ACCESS_EXPIRY as string);    // Here generating json web token
-  let currentDateTime: string = getCurrentUTCTime();   // Getting UTC current time
-  let newAccessTokenId: number = await updateAccessToken({ access_token: newAccessToken, refresh_token_id: findRefreshToken[0].id, user_id: userDetails.user_id, updated_on: currentDateTime });    // Here we are setting access token relate to refresh_token_id in DB 
+  let new_access_token = generateToken(user_details.user_id, user_details.user_type, process.env.ACCESS_TOKEN_KEY as string, process.env.ACCESS_EXPIRY as string);    // Here generating json web token
+  let current_date_time = getCurrentUTCTime();   // Getting UTC current time
+  await updateAccessToken({ access_token: new_access_token, refresh_token_id: find_refresh_token[0].id, user_id: user_details.user_id, updated_on: current_date_time });    // Here we are setting access token relate to refresh_token_id in DB 
 
-  return res.status(200).json(new ApiResponse(200, { user_id: userDetails.user_id, refresh_token: refresh_token, access_token: newAccessToken }, "Generated access token successfully !!"));
+  return res.status(200).json(new ApiResponse(200, { user_id: user_details.user_id, refresh_token: refresh_token, access_token: new_access_token }, "Generated access token successfully !!"));
 });
 
 
@@ -113,10 +163,14 @@ const accessTokenFromRefreshToken = asyncHandler(async (req: Request, res: Respo
 
 const logout = asyncHandler(async (req: Request, res: Response) => {
   let { refresh_token } = req.body;
+  let body = req.body;
+  let required_keys = ["refresh_token"];
+  let check_required_input = checkAllRequiredKeysData(body, required_keys);   // Checking whether we have got all the require inputs from request
+  if (!check_required_input.status) return res.status(400).json(new ApiError(400, "Please send all the require inputs", [{ not_exists_key: check_required_input.not_exists_keys, not_exists_value: check_required_input.not_exists_value }]));
 
-  let userDetails: TokenUserDetail = getUserFromToken(refresh_token as string, "refresh_token");    // Reading user details from given refresh token
+  let user_details = getUserFromToken(refresh_token as string, "refresh_token");    // Reading user details from given refresh token
 
-  let findRefreshToken: RowDataPacket[] = await getRefreshTokenIdFromRefreshToken(refresh_token as string, userDetails.user_id);   // Finding refresh token exists or not in table
+  let findRefreshToken = await getRefreshTokenIdFromRefreshToken(refresh_token, user_details.user_id);   // Finding refresh token exists or not in table
   if (findRefreshToken.length == 0) return res.status(400).json(new ApiError(400, "Refresh token does not exists !!"));
 
   await deleteRefreshTokenFromRefreshTokenId(findRefreshToken[0].id);   // Deleting refresh token it will also delete accesstoken because cascade delete
@@ -135,12 +189,15 @@ const logout = asyncHandler(async (req: Request, res: Response) => {
 
 const logoutAll = asyncHandler(async (req: Request, res: Response) => {
   let { refresh_token } = req.body;
+  let body = req.body;
+  let required_keys = ["refresh_token"];
+  let check_required_input = checkAllRequiredKeysData(body, required_keys);   // Checking whether we have got all the require inputs from request
+  if (!check_required_input.status) return res.status(400).json(new ApiError(400, "Please send all the require inputs", [{ not_exists_key: check_required_input.not_exists_keys, not_exists_value: check_required_input.not_exists_value }]));
 
-  let userDetails: TokenUserDetail = getUserFromToken(refresh_token as string, "refresh_token");    // Reading user details from given refresh token
+  let user_details = getUserFromToken(refresh_token, "refresh_token");    // Reading user details from given refresh token
 
-  await deleteAllRefreshTokenOfUser(userDetails.user_id);   // Finding refresh token exists or not in table
+  await deleteAllRefreshTokenOfUser(user_details.user_id);   // Deleting refresh token from table
   return res.status(200).json(new ApiResponse(200, {}, "User logged out from all the devices !!"));
-
 });
 
 

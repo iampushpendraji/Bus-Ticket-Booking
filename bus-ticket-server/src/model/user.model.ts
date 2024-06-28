@@ -1,4 +1,4 @@
-import { ResultSetHeader, RowDataPacket } from 'mysql2/promise'; 
+import { PoolConnection, ResultSetHeader, RowDataPacket } from 'mysql2/promise';
 import { pool } from "../db/connectDB";
 import { UserType } from "../interfaces/user.interface";
 
@@ -27,20 +27,22 @@ async function getUserFromEmail(user_email: string): Promise<RowDataPacket[]> {
 
 async function checkPhoneExists(user_phone: string): Promise<boolean> {
     const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM users WHERE user_phone = ?', [user_phone]);
-    return rows.length ? true: false;
+    return rows.length ? true : false;
 }
 
 
 /**
  * 
  * @name : insertNewUser
- * @Desc : For inserting new user into DB
+ * @Desc : 
+ * - For inserting new user into DB
+ * - This is a transition query so it has a {connection} as a parameter, which can be used if we are using it in transitions
  * 
  */
 
 
-async function insertNewUser(newUser: UserType): Promise<number> {
-    const [rows] = await pool.query<ResultSetHeader>('INSERT INTO users SET ?', newUser);
+async function insertNewUser(newUser: UserType, connection: PoolConnection): Promise<number> {
+    const [rows] = await connection.query<ResultSetHeader>('INSERT INTO users SET ?', newUser);
     return rows.insertId;
 }
 
@@ -48,13 +50,15 @@ async function insertNewUser(newUser: UserType): Promise<number> {
 /**
  * 
  * @name : setRefreshToken
- * @Desc : For inserting new refresh token into DB
+ * @Desc : 
+ * - For inserting new refresh token into DB
+ * - This is a transition query so it has a {connection} as a parameter, which can be used if we are using it in transitions
  * 
  */
 
 
-async function setRefreshToken(newRefreshToken: { refresh_token: string, user_id: number, created_on: string, updated_on: string }): Promise<number> {
-    const [rows] = await pool.query<ResultSetHeader>('INSERT INTO auth_refresh_token SET ?', newRefreshToken);
+async function insertRefreshToken(new_refresh_token: { refresh_token: string, user_id: number, created_on: string, updated_on: string }, connection: PoolConnection): Promise<number> {
+    const [rows] = await connection.query<ResultSetHeader>('INSERT INTO auth_refresh_token SET ?', new_refresh_token);
     return rows.insertId;
 }
 
@@ -67,8 +71,8 @@ async function setRefreshToken(newRefreshToken: { refresh_token: string, user_id
  */
 
 
-async function setAccessToken(newAccessToken: { access_token: string, refresh_token_id: number, user_id: number, created_on: string, updated_on: string }): Promise<number> {
-    const [rows] = await pool.query<ResultSetHeader>('INSERT INTO auth_access_token SET ?', newAccessToken);
+async function insertAccessToken(new_access_token: { access_token: string, refresh_token_id: number, user_id: number, created_on: string, updated_on: string }, connection: PoolConnection): Promise<number> {
+    const [rows] = await connection.query<ResultSetHeader>('INSERT INTO auth_access_token SET ?', new_access_token);
     return rows.insertId;
 }
 
@@ -83,8 +87,8 @@ async function setAccessToken(newAccessToken: { access_token: string, refresh_to
  */
 
 
-async function updateAccessToken(newAccessToken: { access_token: string, refresh_token_id: number, user_id: number, updated_on: string }): Promise<number> {
-    const [rows] = await pool.query<ResultSetHeader>('UPDATE auth_access_token SET ? WHERE refresh_token_id = ?', [newAccessToken, newAccessToken.refresh_token_id]);
+async function updateAccessToken(new_access_token: { access_token: string, refresh_token_id: number, user_id: number, updated_on: string }): Promise<number> {
+    const [rows] = await pool.query<ResultSetHeader>('UPDATE auth_access_token SET ? WHERE refresh_token_id = ?', [new_access_token, new_access_token.refresh_token_id]);
     return rows.insertId;
 }
 
@@ -112,7 +116,7 @@ async function getRefreshTokenIdFromRefreshToken(refresh_token: string, user_id:
 
 
 async function deleteAllRefreshTokenOfUser(user_id: number): Promise<RowDataPacket[]> {
-    const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM auth_refresh_token WHERE user_id = ?', [user_id]);
+    const [rows] = await pool.query<RowDataPacket[]>('DELETE FROM auth_refresh_token WHERE user_id = ?', [user_id]);
     return rows;
 }
 
@@ -131,4 +135,4 @@ async function deleteRefreshTokenFromRefreshTokenId(refresh_token_id: number): P
 }
 
 
-export { getUserFromEmail, checkPhoneExists, insertNewUser, setRefreshToken, setAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken, deleteRefreshTokenFromRefreshTokenId, deleteAllRefreshTokenOfUser };
+export { getUserFromEmail, checkPhoneExists, insertNewUser, insertRefreshToken, insertAccessToken, updateAccessToken, getRefreshTokenIdFromRefreshToken, deleteRefreshTokenFromRefreshTokenId, deleteAllRefreshTokenOfUser };

@@ -18,4 +18,25 @@ function getCurrentUTCTime() {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-export { getCurrentUTCTime };
+
+/**
+ * 
+ * @name - checkAllRequiredKeysData
+ * @desc - 
+ * - It will check whether all {data} has all the require keys and it should not be empty as well
+ * - It will return status and the keys which are missing or data is not there
+ * 
+ */
+
+
+function checkAllRequiredKeysData(data: any, required_keys: string[]): { status: boolean, not_exists_keys: string[], not_exists_value: string[] } {
+    let notExistsKeys: string[] = [], notExistsValue: string[] = [];
+    required_keys.map((p: string) => {
+        if(!data.hasOwnProperty(p)) notExistsKeys.push(p);     // If kes does not exists in object itself then we will put it in {notExistsKeys}
+        if(!data[p]) notExistsValue.push(p);     // If key does not have any data then we will put it in {notExistsValue}
+    });
+    if(notExistsKeys.length > 0 || notExistsValue.length > 0) return { status: false, not_exists_keys: notExistsKeys, not_exists_value: notExistsValue};
+    else return { status: true, not_exists_keys: [], not_exists_value: []};
+}
+
+export { getCurrentUTCTime, checkAllRequiredKeysData };
