@@ -1,8 +1,8 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import healthcheckRouter from './routes/healthcheck.routes';
-import userRouter from './routes/user.routes';
+import health_check_router from './routes/health_check.routes';
+import user_router from './routes/user.routes';
 
 
 // Initialize Express application
@@ -21,8 +21,8 @@ app.use(cookieParser());
 
 
 // Routes
-app.use('/api/v1/healthcheck', healthcheckRouter);
-app.use('/api/v1/user', userRouter);
+app.use('/api/v1/health_check', health_check_router);
+app.use('/api/v1/user', user_router);
 
 
 // Example route

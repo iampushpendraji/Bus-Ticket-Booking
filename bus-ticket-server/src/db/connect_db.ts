@@ -22,7 +22,7 @@ const dbConfig = {
 const pool: Pool = mysql.createPool(dbConfig);
 
 // Function to establish database connection
-const connectDB = (): Promise<void> => {
+const connect_db = (): Promise<void> => {
   return new Promise(async (res, rej) => {
     try {
       const connection: PoolConnection = await pool.getConnection();
@@ -35,4 +35,4 @@ const connectDB = (): Promise<void> => {
   })
 };
 
-export { connectDB, pool };
+export { connect_db, pool };

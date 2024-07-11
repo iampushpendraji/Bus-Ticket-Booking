@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { connectDB } from './db/connectDB';
+import { connect_db } from './db/connect_db';
 import { app } from './app';
 
 dotenv.config({ path: './.env' });
@@ -7,7 +7,7 @@ dotenv.config({ path: './.env' });
 const PORT = process.env.PORT || 8000;
 
 // Connecting to MySQL
-connectDB()
+connect_db()
     .then(() => {
         // Start the Express server
         app.listen(PORT, () => {
