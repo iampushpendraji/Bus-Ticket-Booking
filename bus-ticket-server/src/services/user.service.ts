@@ -2,8 +2,6 @@ import { UserType, TokenUserDetail } from "../interfaces/user.interface";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { get_current_UTC_time } from "../utils/common_utilites";
-import fs from "fs";
-import * as path from 'path';
 
 
 /**
@@ -52,35 +50,10 @@ function generate_token(user_id: number, user_type: string, token_key: string, e
  */
 
 
-async function get_bcrypt_password(password: string): Promise<string> {
-    const private_key_path = path.join(__dirname, '../keys', 'private.pem'),    // Getting public key path
-        token_key = fs.readFileSync(private_key_path),
-        hashed_password: string = await bcrypt.hash(password, 10),
-        token = jwt.sign(hashed_password, token_key, { algorithm: 'RS256' });
+async function get_bcrypt_password(password: string, token_key: string): Promise<string> {
+    const hashed_password = await bcrypt.hash(password, 10),
+        token = jwt.sign(hashed_password, token_key);
     return token;
-}
-
-
-/**
- * 
- * @name : decrypt_password
- * @Desc : 
- * - For decrypting password
- * - Using private key for decoding the password
- * 
- */
-
-
-function decrypt_password(password: string): { status: boolean, pass: string, error_message?: string } {
-    try {
-        const public_key_path = path.join(__dirname, '../keys', 'public.pem'),    // Getting private key path
-            token_key = fs.readFileSync(public_key_path),
-            data = jwt.verify(password, token_key, { algorithms: ['RS256'] }) as string;
-        return { status: true, pass: data };
-    }
-    catch (err) {
-        return { status: false, pass: '', error_message: 'Please send encrypted password !!' };
-    }
 }
 
 
@@ -92,12 +65,10 @@ function decrypt_password(password: string): { status: boolean, pass: string, er
  */
 
 
-async function validate_password(db_password: string, user_password: string): Promise<boolean> {
-    let pass1 = decrypt_password(db_password);    // It will be bcrypted password
-    if (!pass1.status) return false;
-    let pass2 = decrypt_password(user_password);      // It will be string
-    if (!pass2.status) return false;
-    let passCheck = await bcrypt.compare(pass2.pass, pass1.pass);  // Validating password here
+async function validate_password(db_password: string, user_password: string, token_key: string): Promise<boolean> {
+    const pass1 = jwt.verify(db_password, token_key) as string;
+    let pass2 = user_password;      // It will be string
+    let passCheck = await bcrypt.compare(pass2, pass1);  // Validating password here
     return passCheck;
 }
 
@@ -111,9 +82,9 @@ async function validate_password(db_password: string, user_password: string): Pr
 
 
 function get_user_from_token(token: string, token_type: string): TokenUserDetail {
-    let token_key: string = token_type === "refresh_token" ? process.env.REFRESH_TOKEN_KEY as string : process.env.ACCESS_TOKEN_KEY as string;
-    let data: TokenUserDetail = jwt.verify(token, token_key) as TokenUserDetail;
+    let token_key = token_type === "refresh_token" ? process.env.REFRESH_TOKEN_KEY as string : process.env.ACCESS_TOKEN_KEY as string;
+    let data = jwt.verify(token, token_key) as TokenUserDetail;
     return data;
 }
 
-export { get_user_details, generate_token, get_bcrypt_password, validate_password, get_user_from_token, decrypt_password };
+export { get_user_details, generate_token, get_bcrypt_password, validate_password, get_user_from_token };
