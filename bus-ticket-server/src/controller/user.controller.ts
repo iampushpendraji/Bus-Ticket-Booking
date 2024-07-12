@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import { pool } from '../db/connect_db';
 import { PoolConnection } from 'mysql2/promise';
-import { ApiResponse } from '../utils/apiResponse';
-import { ApiError } from '../utils/apiError';
-import { async_handler } from '../utils/asyncHandler';
+import fs from 'fs';
+import { ApiResponse } from '../utils/ApiResponse';
+import { ApiError } from '../utils/ApiError';
+import { async_handler } from '../utils/async_handler';
 import { get_user_from_email, check_phone_exists, insert_new_user, insert_refresh_token, insert_access_token, update_access_token, get_refresh_token_id_from_refresh_token, delete_refresh_token_from_refresh_token_id, delete_all_refresh_token_of_user } from '../model/user.model';
 import { get_user_details, get_bcrypt_password, generate_token, validate_password, get_user_from_token, decrypt_password } from '../services/user.service';
-import { get_current_UTC_time, check_all_required_keys_data } from '../utils/commonUtilites';
+import { get_current_UTC_time, check_all_required_keys_data } from '../utils/common_utilites';
 
 
 /**
@@ -28,7 +29,7 @@ const register = async_handler(async (req: Request, res: Response) => {
 
   let new_user = get_user_details(body);   // Creating new user object adding user information here
 
-  let dcrypted_pass = decrypt_password(new_user.password, process.env.PASSWORD_TOKEN_KEY as string);   // Decrypting password here
+  let dcrypted_pass = decrypt_password(new_user.password, process.env.SECRET_PRIVATE_KEY as string);   // Decrypting password here
   if (!dcrypted_pass.status) return res.status(400).send(new ApiError(400, dcrypted_pass.error_message)); // If user put wonge password or decrypted password directly
   new_user.password = dcrypted_pass.pass;
 
@@ -38,7 +39,7 @@ const register = async_handler(async (req: Request, res: Response) => {
   const is_phone_exists = await check_phone_exists(new_user.user_phone);   // Checking whether phone already exists or not
   if (is_phone_exists) return res.status(400).json(new ApiError(400, "Phone number is already exists !!"));
 
-  new_user.password = await get_bcrypt_password(new_user.password, process.env.PASSWORD_TOKEN_KEY as string)  // Here we are hashing the {user_password}
+  new_user.password = await get_bcrypt_password(new_user.password, process.env.SECRET_PUBLIC_KEY as string)  // Here we are hashing the {user_password}
 
   let connection: PoolConnection | null = null;
   try {
@@ -92,7 +93,7 @@ const login = async_handler(async (req: Request, res: Response) => {
   let user_details = await get_user_from_email(user_email);   // Checking whether email already exists or not
   if (user_details.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
 
-  let pass_check = await validate_password(user_details[0].password, password, process.env.PASSWORD_TOKEN_KEY as string);   // Validating password
+  let pass_check = await validate_password(user_details[0].password, password, process.env.SECRET_PRIVATE_KEY as string);   // Validating password
   if (!pass_check) return res.status(400).json(new ApiError(400, "Password is invalid !!"));
 
   let new_refresh_token = generate_token(user_details[0].id, user_details[0].user_type, process.env.REFRESH_TOKEN_KEY as string, process.env.REFRESH_EXPIRY as string);   // Here generating json web token

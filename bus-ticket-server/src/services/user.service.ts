@@ -1,7 +1,7 @@
 import { UserType, TokenUserDetail } from "../interfaces/user.interface";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { get_current_UTC_time } from "../utils/commonUtilites";
+import { get_current_UTC_time } from "../utils/common_utilites";
 
 
 /**
@@ -43,14 +43,16 @@ function generate_token(user_id: number, user_type: string, token_key: string, e
 /**
  * 
  * @name : get_bcrypt_password
- * @Desc : For generating bcrypt password
+ * @Desc : 
+ * - For generating bcrypt password
+ * - Using public key for encoding the password
  * 
  */
 
 
 async function get_bcrypt_password(password: string, token_key: string): Promise<string> {
     const hashed_password: string = await bcrypt.hash(password, 10);
-    const token: string = jwt.sign(hashed_password, token_key);
+    const token: string = jwt.sign(hashed_password, token_key, { algorithm: 'RS256'});
     return token;
 }
 
@@ -58,14 +60,16 @@ async function get_bcrypt_password(password: string, token_key: string): Promise
 /**
  * 
  * @name : decrypt_password
- * @Desc : For decrypting password
+ * @Desc : 
+ * - For decrypting password
+ * - Using private key for decoding the password
  * 
  */
 
 
 function decrypt_password(password: string, token_key: string): { status: boolean, pass: string, error_message?: string } {
     try {
-        let data: string = jwt.verify(password, token_key) as string;
+        let data: string = jwt.verify(password, token_key, { algorithms: ['RS256']}) as string;
         return { status: true, pass: data };
     }
     catch (err) {
