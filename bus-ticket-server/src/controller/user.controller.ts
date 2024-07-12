@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { pool } from '../db/connect_db';
 import { PoolConnection } from 'mysql2/promise';
-import fs from 'fs';
 import { ApiResponse } from '../utils/ApiResponse';
 import { ApiError } from '../utils/ApiError';
 import { async_handler } from '../utils/async_handler';
@@ -29,7 +28,7 @@ const register = async_handler(async (req: Request, res: Response) => {
 
   let new_user = get_user_details(body);   // Creating new user object adding user information here
 
-  let dcrypted_pass = decrypt_password(new_user.password, process.env.SECRET_PRIVATE_KEY as string);   // Decrypting password here
+  let dcrypted_pass = decrypt_password(new_user.password);   // Decrypting password here
   if (!dcrypted_pass.status) return res.status(400).send(new ApiError(400, dcrypted_pass.error_message)); // If user put wonge password or decrypted password directly
   new_user.password = dcrypted_pass.pass;
 
@@ -39,7 +38,7 @@ const register = async_handler(async (req: Request, res: Response) => {
   const is_phone_exists = await check_phone_exists(new_user.user_phone);   // Checking whether phone already exists or not
   if (is_phone_exists) return res.status(400).json(new ApiError(400, "Phone number is already exists !!"));
 
-  new_user.password = await get_bcrypt_password(new_user.password, process.env.SECRET_PUBLIC_KEY as string)  // Here we are hashing the {user_password}
+  new_user.password = await get_bcrypt_password(new_user.password)  // Here we are hashing the {user_password}
 
   let connection: PoolConnection | null = null;
   try {
@@ -93,7 +92,7 @@ const login = async_handler(async (req: Request, res: Response) => {
   let user_details = await get_user_from_email(user_email);   // Checking whether email already exists or not
   if (user_details.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
 
-  let pass_check = await validate_password(user_details[0].password, password, process.env.SECRET_PRIVATE_KEY as string);   // Validating password
+  let pass_check = await validate_password(user_details[0].password, password);   // Validating password
   if (!pass_check) return res.status(400).json(new ApiError(400, "Password is invalid !!"));
 
   let new_refresh_token = generate_token(user_details[0].id, user_details[0].user_type, process.env.REFRESH_TOKEN_KEY as string, process.env.REFRESH_EXPIRY as string);   // Here generating json web token
