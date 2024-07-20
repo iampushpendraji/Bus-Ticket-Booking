@@ -7,6 +7,7 @@ dotenv.config({ path: './.env' });
 const dbConfig = {
   host: process.env.HOST,
   user: process.env.USR,
+  port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : undefined,
   database: process.env.DATABASE,
   password: process.env.PASSWORD,
   waitForConnections: true,
