@@ -1,4 +1,5 @@
 // PORT=<3000>
+// MYSQL_PORT=<Your-MySql-Port>
 // HOST=<localhost>
 // USR=<root>
 // DATABASE=<Your-DB>
