@@ -1,9 +1,9 @@
 // PORT=<3000>
 // MYSQL_PORT=<Your-MySql-Port>
-// HOST=<localhost>
-// USR=<root>
-// DATABASE=<Your-DB>
-// PASSWORD=<Your-Pass>
+// MYSQL_HOST=<localhost>
+// MYSQL_USR=<root>
+// MYSQL_DATABASE=<Your-DB>
+// MYSQL_PASSWORD=<Your-Pass>
 // REFRESH_TOKEN_KEY=<Your-Ref-Token-Key>
 // REFRESH_EXPIRY=<Time> (1h)
 // ACCESS_TOKEN_KEY=<Your-Access-Token-Key>
