@@ -6,7 +6,7 @@ dotenv.config({ path: './.env' });
 
 
 // MySQL database connection options from environment variables
-const mySQLDBConfig = {
+const my_sql_db_config = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USR,
   port: process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT) : undefined,
@@ -23,11 +23,11 @@ const mySQLDBConfig = {
 
 
 // Creating a MySQL connection pool
-const pool: Pool = mysql.createPool(mySQLDBConfig);
+const pool: Pool = mysql.createPool(my_sql_db_config);
 
 
 // Redis database connection options from environment variables
-const redisDBConfig = {
+const redis_db_config = {
   port: Number(process.env.REDIS_PORT),
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD,
@@ -36,14 +36,14 @@ const redisDBConfig = {
 
 
 // Creating a redis connection
-const redisCli = new Redis(redisDBConfig);
+const redis_cli: Redis = new Redis(redis_db_config);
 
 
 // Function to establish database connection (MySQL && Redis)
 const connect_db: Promise<void> = new Promise(async (res, rej) => {
   try {
     const connection: PoolConnection = await pool.getConnection();  // Checking connection of MySQL
-    await redisCli.ping();   // Checking connection of redis
+    await redis_cli.ping();   // Checking connection of redis
     connection.release();
     res();
   }
@@ -53,4 +53,4 @@ const connect_db: Promise<void> = new Promise(async (res, rej) => {
 });
 
 
-export { connect_db, pool, redisCli };
+export { connect_db, pool, redis_cli };

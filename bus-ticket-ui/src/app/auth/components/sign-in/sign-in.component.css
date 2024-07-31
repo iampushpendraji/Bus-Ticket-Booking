@@ -1,0 +1,9 @@
+#sign-in-wrapper {
+    background: linear-gradient(45deg, #2e3736, transparent);
+}
+
+
+#sign-in-form {
+    background: #eae5e5;
+    border-radius: 15px 45px 30px 35px !important;
+}
