@@ -149,4 +149,18 @@ async function delete_refresh_token_from_refresh_token_id(refresh_token_id: numb
 }
 
 
-export { get_user_from_email, get_user_from_id, check_phone_exists, insert_new_user, insert_refresh_token, insert_access_token, update_access_token, get_refresh_token_id_from_refresh_token, delete_refresh_token_from_refresh_token_id, delete_all_refresh_token_of_user };
+/**
+ * 
+ * @name : update_user_password
+ * @Desc : For updating user password
+ * 
+ */
+
+
+async function update_user_password(user_update_data: { password: string, updated_on: string }, user_id: number): Promise<number> {
+    const [rows] = await pool.query<ResultSetHeader>('UPDATE users SET ? WHERE id = ?', [user_update_data, user_id]);
+    return rows.insertId;
+}
+
+
+export { get_user_from_email, get_user_from_id, check_phone_exists, insert_new_user, insert_refresh_token, insert_access_token, update_access_token, get_refresh_token_id_from_refresh_token, delete_refresh_token_from_refresh_token_id, delete_all_refresh_token_of_user, update_user_password };

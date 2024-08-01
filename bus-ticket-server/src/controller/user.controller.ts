@@ -4,7 +4,7 @@ import { PoolConnection } from 'mysql2/promise';
 import { ApiResponse } from '../utils/ApiResponse';
 import { ApiError } from '../utils/ApiError';
 import { async_handler } from '../utils/async_handler';
-import { get_user_from_email, get_user_from_id, check_phone_exists, insert_new_user, insert_refresh_token, insert_access_token, update_access_token, get_refresh_token_id_from_refresh_token, delete_refresh_token_from_refresh_token_id, delete_all_refresh_token_of_user } from '../model/user.model';
+import { get_user_from_email, get_user_from_id, check_phone_exists, insert_new_user, insert_refresh_token, insert_access_token, update_access_token, get_refresh_token_id_from_refresh_token, delete_refresh_token_from_refresh_token_id, delete_all_refresh_token_of_user, update_user_password } from '../model/user.model';
 import { get_user_details, get_bcrypt_password, generate_token, validate_password, generate_otp, generate_secret } from '../services/user.service';
 import { get_current_UTC_time, check_all_required_keys_data, get_user_from_token } from '../utils/common_utilites';
 import { send_email_otp } from '../utils/nodemailer_helper';
@@ -89,7 +89,7 @@ const sign_in = async_handler(async (req: Request, res: Response) => {
 
   let user_details = await get_user_from_email(user_email);   // Checking whether email already exists or not
   if (user_details.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
-  if (user_details[0]['is_acitve'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
+  if (user_details[0]['is_active'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
 
   let pass_check = await validate_password(user_details[0].password, password, process.env.PASSWORD_TOKEN_KEY as string);   // Validating password
   if (!pass_check) return res.status(400).json(new ApiError(400, "Password is invalid !!"));
@@ -142,7 +142,7 @@ const access_token_from_refresh_token = async_handler(async (req: Request, res: 
 
   let user_details_db = await get_user_from_id(user_details['user_id']);   // Checking whether user email exists or not
   if (user_details_db.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
-  if (user_details_db[0]['is_acitve'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
+  if (user_details_db[0]['is_active'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
 
   let find_refresh_token = await get_refresh_token_id_from_refresh_token(refresh_token as string, user_details.user_id);   // Finding refresh token exists or not in table
   if (find_refresh_token.length == 0) return res.status(400).json(new ApiError(400, "Refresh token does not exists !!"));
@@ -224,13 +224,13 @@ const forget_password = async_handler(async (req: Request, res: Response) => {
 
   let user_details = await get_user_from_email(user_email as string);   // Checking whether email already exists or not
   if (user_details.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
-  if (user_details[0]['is_acitve'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
+  if (user_details[0]['is_active'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
 
   let otp = generate_otp(); // Generating OTP
 
   await send_email_otp(user_email as string, 'Forgot password OTP', 'Please check here is your', otp); // Sending OTP to the {user_email}
 
-  redis_cli.set(`${user_details[0]['id']}:forgot_password_otp`, otp, `EX`, 120); // Storing OTP in redis db with 120sec of expiry
+  await redis_cli.set(`${user_details[0]['id']}:forgot_password_otp`, otp, `EX`, 120); // Storing OTP in redis db with 120sec of expiry
 
   return res.status(204).json(new ApiResponse(204, {}, "OTP send successfully !!"));
 });
@@ -254,18 +254,56 @@ const verify_forget_password_otp = async_handler(async (req: Request, res: Respo
 
   let user_details = await get_user_from_email(user_email as string);   // Checking whether email already exists or not
   if (user_details.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
-  if (user_details[0]['is_acitve'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
+  if (user_details[0]['is_active'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
 
-  let redis_resp = await redis_cli.get(`${user_details[0]['id']}:forgot_password_otp`); // Storing OTP in redis db with 30sec of expiry
+  let redis_resp = await redis_cli.get(`${user_details[0]['id']}:forgot_password_otp`); // Getting OTP from redis db
   if (!redis_resp) return res.status(400).json(new ApiError(400, "OTP has expired !!"));
 
   if (otp !== redis_resp) return res.status(400).json(new ApiError(400, "OTP is wronge !!"));
 
   let forgot_pass_secret = generate_secret(); // Generating secret for checking on the time of change password
-  redis_cli.set(`${user_details[0]['id']}:forgot_password_secret`, forgot_pass_secret, `EX`, 120); // Storing OTP in redis db with 120sec of expiry
+  await redis_cli.set(`${user_details[0]['id']}:forgot_password_secret`, forgot_pass_secret, `EX`, 120); // Storing OTP in redis db with 120sec of expiry
+
+  await redis_cli.del(`${user_details[0]['id']}:forgot_password_otp`);  // Deleting OTP from redis
 
   return res.status(200).json(new ApiResponse(200, { forgot_pass_secret }, "OTP verified successfully !!"));
 });
 
 
-export { register, sign_in, access_token_from_refresh_token, sign_out, sign_out_all, forget_password, verify_forget_password_otp };
+/**
+ * 
+ * @name : change_password_with_secret
+ * @route : /api/v1/user/change_password_with_secret
+ * @Desc : For changing password on the basis of {forgot_pass_secret}
+ * 
+ */
+
+
+const change_password_with_secret = async_handler(async (req: Request, res: Response) => {
+  let { user_email, new_password, forgot_pass_secret } = req.body;
+  let body = req.body;
+  let required_keys = ["new_password", "forgot_pass_secret"];
+  let check_required_input = check_all_required_keys_data(body, required_keys);   // Checking whether we have got all the require inputs from request
+  if (!check_required_input.status) return res.status(400).json(new ApiError(400, "Please send all the require inputs", [{ not_exists_key: check_required_input.not_exists_keys, not_exists_value: check_required_input.not_exists_value }]));
+
+  let user_details = await get_user_from_email(user_email as string);   // Checking whether email already exists or not
+  if (user_details.length == 0) return res.status(400).json(new ApiError(400, "Email does not exists !!"));
+  if (user_details[0]['is_active'] == 0) return res.status(400).json(new ApiError(400, "User is not active !!"));
+
+  let redis_resp = await redis_cli.get(`${user_details[0]['id']}:forgot_password_secret`); // Getting Secret from redis db
+  if (!redis_resp) return res.status(400).json(new ApiError(400, "Secret has expired !!"));
+
+  if (forgot_pass_secret !== redis_resp) return res.status(400).json(new ApiError(400, "Secret is wronge !!"));
+
+  let current_date_time = get_current_UTC_time();   // Getting UTC current time
+  let hash_password = await get_bcrypt_password(new_password, process.env.PASSWORD_TOKEN_KEY as string)  // Here we are hashing the {user_password}
+  let obj = { password: hash_password, updated_on: current_date_time }
+  await update_user_password(obj, user_details[0]['id']);   // Here we are setting new password in DB
+
+  await redis_cli.del(`${user_details[0]['id']}:forgot_password_secret`);  // Deleting Secret from redis
+
+  return res.status(204).json(new ApiResponse(204, {}, "Password changed successfully !!"));
+});
+
+
+export { register, sign_in, access_token_from_refresh_token, sign_out, sign_out_all, forget_password, verify_forget_password_otp, change_password_with_secret };

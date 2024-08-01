@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, sign_in, access_token_from_refresh_token, sign_out, sign_out_all, forget_password, verify_forget_password_otp } from '../controller/user.controller';
+import { register, sign_in, access_token_from_refresh_token, sign_out, sign_out_all, forget_password, verify_forget_password_otp, change_password_with_secret } from '../controller/user.controller';
 
 
 const router = Router();
@@ -12,6 +12,7 @@ router.route('/sign_out').post(sign_out);
 router.route('/sign_out_all').post(sign_out_all);
 router.route('/forget_password').get(forget_password);
 router.route('/verify_forget_password_otp').get(verify_forget_password_otp);
+router.route('/change_password_with_secret').post(change_password_with_secret);
 
 
 export default router;
