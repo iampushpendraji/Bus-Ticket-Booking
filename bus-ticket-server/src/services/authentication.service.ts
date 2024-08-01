@@ -5,6 +5,14 @@ import { async_handler } from '../utils/async_handler';
 import { get_user_from_token } from '../utils/common_utilites';
 
 
+/**
+ * 
+ * @name : authenticate_token
+ * @Desc : For authenticate user with access token
+ * 
+ */
+
+
 const authenticate_token = async_handler(async (req: Request, res: Response, next: NextFunction) => {
     const auth_header = req.headers['authorization'];
     const token = auth_header && auth_header.split(' ')[1];

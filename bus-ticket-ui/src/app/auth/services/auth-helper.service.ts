@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AuthCookie } from '../interfaces/auth-interface';
 import { environment } from '../../../environments/environment';
 import { CookieService } from 'ngx-cookie-service';
@@ -8,8 +8,10 @@ import { CookieService } from 'ngx-cookie-service';
   providedIn: 'root'
 })
 export class AuthHelperService {
+  _ngxCookieService: CookieService = inject(CookieService);
 
-  constructor(private _ngxCookieService: CookieService) { }
+
+  constructor() { }
 
 
   // Setting cookies

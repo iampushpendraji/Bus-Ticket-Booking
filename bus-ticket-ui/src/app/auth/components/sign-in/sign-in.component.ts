@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { AuthApiService } from '../../services/auth-api.service';
 import { AuthHelperService } from '../../services/auth-helper.service';
@@ -17,13 +17,12 @@ import { DataTransferService } from '../../../common/services/data-transfer.serv
 
 export class SignInComponent {
   isLoading: boolean = false;
+  _authApiService: AuthApiService = inject(AuthApiService);
+  _authHelperService: AuthHelperService = inject(AuthHelperService);
+  _dataTransferService: DataTransferService = inject(DataTransferService);
 
 
-  constructor(
-    private _authApiService: AuthApiService,
-    private _authHelperService: AuthHelperService,
-    private _dataTransferService: DataTransferService
-  ) { }
+  constructor() { }
 
 
   // Form submit button click handler

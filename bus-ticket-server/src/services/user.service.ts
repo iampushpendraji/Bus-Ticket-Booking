@@ -2,6 +2,8 @@ import { UserType } from "../interfaces/user.interface";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { get_current_UTC_time } from "../utils/common_utilites";
+import randomstring from 'randomstring';
+
 
 
 /**
@@ -72,4 +74,40 @@ async function validate_password(db_password: string, user_password: string, tok
     return passCheck;
 }
 
-export { get_user_details, generate_token, get_bcrypt_password, validate_password };
+
+/**
+ * 
+ * @name : generate_otp
+ * @Desc : For generating OTP
+ * 
+ */
+
+
+const generate_otp = (): string => {
+    const otp = randomstring.generate({
+        length: 6,
+        charset: 'numeric', // Ensures only numbers are used
+    });
+    return otp;
+};
+
+
+/**
+ * 
+ * @name : generate_secret
+ * @Desc : For generating secret
+ * 
+ */
+
+
+const generate_secret = (): string => {
+    const otp = randomstring.generate({
+        length: 6,
+        charset: 'alphanumeric', // Includes numbers and letters (both uppercase and lowercase)
+        capitalization: 'uppercase' // Ensure OTP is uppercase
+    });
+    return otp;
+};
+
+
+export { get_user_details, generate_token, get_bcrypt_password, validate_password, generate_otp, generate_secret };

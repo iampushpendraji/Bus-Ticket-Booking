@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, OnInit, effect, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, signal } from '@angular/core';
 import { Toast } from 'bootstrap';
 import { DataTransferService } from '../../services/data-transfer.service';
 import { NotificationData } from '../../interfaces/common-interface';
@@ -15,15 +15,18 @@ import { NotificationData } from '../../interfaces/common-interface';
 
 
 export class NotificationComponent implements OnInit {
+  _dataTransfer: DataTransferService = inject(DataTransferService);
+
+
   notificationType = signal<string>('');
   notificationMessage = signal<string>('');
   toast!: Toast;
 
 
-  constructor(private _dataTransfer: DataTransferService) {
+  constructor() {
     effect(() => {
-      if (_dataTransfer.notificationDataShare()) {  // For handling infinite loop on effect
-        let notificationData = _dataTransfer.notificationDataShare();
+      if (this._dataTransfer.notificationDataShare()) {  // For handling infinite loop on effect
+        let notificationData = this._dataTransfer.notificationDataShare();
         if (!notificationData.notificationType || !notificationData.notificationMessage) return  // For handling signal default value it was getting triggered with '' value cause it's the initialize value
         this.showNotification(notificationData);
       }

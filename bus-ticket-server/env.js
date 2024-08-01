@@ -9,3 +9,5 @@
 // ACCESS_TOKEN_KEY=<Your-Access-Token-Key>
 // ACCESS_EXPIRY=<Time> (5h)
 // PASSWORD_TOKEN_KEY=<Your-Password-Token-Key>
+// NODEMAILER_GMAIL_EMAIL=<Your-host-email>
+// NODEMAILER_GMAIL_LESS_SECURE_PASSWORD=<Your-host-email-password>
