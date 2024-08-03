@@ -1,0 +1,54 @@
+<div id="sign-in-wrapper" class="d-flex align-items-center justify-content-center h-100">
+    <form #sign_in_form="ngForm" (ngSubmit)="onSubmitSignIn(sign_in_form)" id="sign-in-form" class="w-lg-25 border p-3 p-lg-5 shadow shadow-sm rounded">
+        <h2 class="mb-4">Sign In</h2>
+
+
+        <!-- user_email form control -->
+        <div class="mb-3">
+            <label for="user-email" class="form-label">Email address</label>
+            <input type="email" ngModel #user_email="ngModel" name="user_email" class="form-control" id="user-email" [required]="true"
+                [ngClass]="( user_email.dirty || user_email.touched ) && ( user_email?.hasError('required') || user_email?.hasError('pattern') ) ? 'is-invalid' : ''"
+                pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
+                />
+            <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+        </div>
+
+
+        <!-- password form control -->
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" ngModel #password="ngModel" name="password" class="form-control" id="password" [required]="true" 
+                [ngClass]="( password.dirty || password.touched ) && password?.hasError('required') ? 'is-invalid' : ''"
+                />
+        </div>
+
+        
+        <!-- remember me form control -->
+        <div class="mb-2 form-check d-flex">
+            <!-- <div>
+                <input type="checkbox" ngModel #remember_me="ngModel" name="remember_me" class="form-check-input" id="remember-me" 
+                    [ngClass]="( remember_me.dirty || remember_me.touched ) && remember_me?.hasError('required') ? 'is-invalid' : ''"
+                    />
+                <label class="form-check-label" for="remember-me">Remember me</label>
+            </div> -->
+            <div class="ms-auto">
+                <button type="button" class="btn text-decoration-underline p-0" (click)="forgotPasswordHandler()">Forgot Password ?</button>
+            </div>
+        </div>
+        
+        
+        <!-- Submit button -->
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading() || sign_in_form.invalid">
+            <span>Submit</span>
+            @if (isLoading()) {
+                <div class="spinner-border spinner-border-sm ms-2" role="status"><span class="visually-hidden">Loading...</span></div>
+            }
+        </button>
+
+    </form>
+
+
+    <!-- Forgot password modal -->
+    <app-forgot-password-modal />
+
+</div>

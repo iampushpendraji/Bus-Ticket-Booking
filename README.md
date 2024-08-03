@@ -8,6 +8,7 @@ This project is created for learning purposes. It is a bus ticket booking applic
 
 - Node.js (latest version)
 - MySQL installed on your machine
+- Redis installed on your machine
 
 ## Project Setup
 
@@ -52,5 +53,6 @@ This project is created for learning purposes. It is a bus ticket booking applic
 ## Additional Information
 
 - Ensure MySQL is running and properly configured.
+- Ensure Redis is running and properly configured.
 - Make sure to set up the database schema as required by the application.
 - For any issues, please check the logs or reach out to the support team.

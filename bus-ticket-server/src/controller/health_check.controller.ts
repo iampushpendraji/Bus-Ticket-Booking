@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ApiResponse } from '../utils/ApiResponse';
+import { ApiResponse } from '../utils/api_response';
 import { async_handler } from '../utils/async_handler';
 
 const health_check = async_handler(async (req: Request, res: Response) => {

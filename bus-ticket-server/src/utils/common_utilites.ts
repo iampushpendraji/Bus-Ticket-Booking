@@ -5,6 +5,9 @@
  * 
  */
 
+import { TokenUserDetail } from "../interfaces/user.interface";
+import jwt from "jsonwebtoken";
+
 
 function get_current_UTC_time() {
     const now = new Date();
@@ -39,4 +42,19 @@ function check_all_required_keys_data(data: any, required_keys: string[]): { sta
     else return { status: true, not_exists_keys: [], not_exists_value: []};
 }
 
-export { get_current_UTC_time, check_all_required_keys_data };
+
+/**
+ * 
+ * @name : get_user_from_token
+ * @Desc : For getting user details from token
+ * 
+ */
+
+
+function get_user_from_token(token: string, token_type: 'refresh_token' | 'access_token'): TokenUserDetail {
+    let token_key = token_type === "refresh_token" ? process.env.REFRESH_TOKEN_KEY as string : process.env.ACCESS_TOKEN_KEY as string;
+    let data = jwt.verify(token, token_key) as TokenUserDetail;
+    return data;
+}
+
+export { get_current_UTC_time, check_all_required_keys_data, get_user_from_token };
