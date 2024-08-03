@@ -14,6 +14,18 @@ export interface SignInResponse extends ApiResult {
 }
 
 
+export interface VoidResult204 extends ApiResult {
+    data: {}
+}
+
+
+export interface VerifyForgetPasswordOtp extends ApiResult {
+    data: {
+        forgot_pass_secret: string
+    }
+}
+
+
 export interface SignInUser {
     user_email: string,
     password: string

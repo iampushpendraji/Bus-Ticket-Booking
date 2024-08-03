@@ -281,7 +281,7 @@ const verify_forget_password_otp = async_handler(async (req: Request, res: Respo
 const change_password_with_secret = async_handler(async (req: Request, res: Response) => {
   let { user_email, new_password, forgot_pass_secret } = req.body;
   let body = req.body;
-  let required_keys = ["new_password", "forgot_pass_secret"];
+  let required_keys = ["user_email", "new_password", "forgot_pass_secret"];
   let check_required_input = check_all_required_keys_data(body, required_keys);   // Checking whether we have got all the require inputs from request
   if (!check_required_input.status) return res.status(400).json(new ApiError(400, "Please send all the require inputs", [{ not_exists_key: check_required_input.not_exists_keys, not_exists_value: check_required_input.not_exists_value }]));
 

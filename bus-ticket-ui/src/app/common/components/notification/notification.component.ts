@@ -15,8 +15,7 @@ import { NotificationData } from '../../interfaces/common-interface';
 
 
 export class NotificationComponent implements OnInit {
-  _dataTransfer: DataTransferService = inject(DataTransferService);
-
+  _dataTransfer = inject(DataTransferService);
 
   notificationType = signal<string>('');
   notificationMessage = signal<string>('');
