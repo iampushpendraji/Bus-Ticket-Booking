@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { redis_cli } from '../db/connect_db';
-import { ApiError } from '../utils/ApiError';
+import { ApiError } from '../utils/api_response';
 import { async_handler } from '../utils/async_handler';
 import { get_user_from_token } from '../utils/common_utilites';
 

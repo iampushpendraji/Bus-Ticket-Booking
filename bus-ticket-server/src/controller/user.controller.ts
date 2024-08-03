@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { pool } from '../db/connect_db';
 import { PoolConnection } from 'mysql2/promise';
-import { ApiResponse } from '../utils/ApiResponse';
-import { ApiError } from '../utils/ApiError';
+import { ApiResponse, ApiError } from '../utils/api_response';
 import { async_handler } from '../utils/async_handler';
 import { get_user_from_email, get_user_from_id, check_phone_exists, insert_new_user, insert_refresh_token, insert_access_token, update_access_token, get_refresh_token_id_from_refresh_token, delete_refresh_token_from_refresh_token_id, delete_all_refresh_token_of_user, update_user_password } from '../model/user.model';
 import { get_user_details, get_bcrypt_password, generate_token, validate_password, generate_otp, generate_secret } from '../services/user.service';
