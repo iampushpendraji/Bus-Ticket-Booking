@@ -14,6 +14,7 @@ import { redis_cli } from '../db/connect_db';
  * 
  * @name : register
  * @route : /api/v1/user/register
+ * @method_type : post
  * @Desc : 
  * - For inserting new user into DB
  * - Added transitions here
@@ -52,7 +53,7 @@ const register = async_handler(async (req: Request, res: Response) => {
     await insert_access_token({ access_token: new_access_token, refresh_token_id: new_refresh_token_id, user_id: new_user_id, created_on: current_date_time, updated_on: current_date_time }, connection);    // Here we are setting access token in DB 
 
     await connection.commit();    // Commit transaction
-    return res.status(201).json(new ApiResponse(201, { user_id: new_user_id, refresh_token: new_refresh_token, access_token: new_access_token }, "User created successfully !!"));
+    return res.status(201).json(new ApiResponse(201, { user_id: new_user_id, user_type: new_user.user_type, refresh_token: new_refresh_token, access_token: new_access_token }, "User created successfully !!"));
   }
   catch (err) {
     if (connection) {
@@ -72,6 +73,7 @@ const register = async_handler(async (req: Request, res: Response) => {
  * 
  * @name : sign_in
  * @route : /api/v1/user/sign_in
+ * @method_type : post
  * @Desc : 
  * - For sign_in
  * - Added transitions here
@@ -125,6 +127,7 @@ const sign_in = async_handler(async (req: Request, res: Response) => {
  * 
  * @name : access_token_from_refresh_token
  * @route : /api/v1/user/access_token_from_refresh_token
+ * @method_type : get
  * @Desc : For getting access token from refresh token
  * 
  */
@@ -158,6 +161,7 @@ const access_token_from_refresh_token = async_handler(async (req: Request, res: 
  * 
  * @name : sign_out
  * @route : /api/v1/user/sign_out
+ * @method_type : post
  * @Desc : 
  * - For deleting refresh token
  * - For deleting access token related to refresh token
@@ -186,6 +190,7 @@ const sign_out = async_handler(async (req: Request, res: Response) => {
  * 
  * @name : sign_out_all
  * @route : /api/v1/user/sign_out_all
+ * @method_type : post
  * @Desc : For deleting refresh token and access token for a user
  * 
  */
@@ -209,6 +214,7 @@ const sign_out_all = async_handler(async (req: Request, res: Response) => {
  * 
  * @name : forget_password
  * @route : /api/v1/user/forget_password
+ * @method_type : get
  * @Desc : For sending OTP to email and storing same in redis
  * 
  */
@@ -239,6 +245,7 @@ const forget_password = async_handler(async (req: Request, res: Response) => {
  * 
  * @name : verify_forget_password_otp
  * @route : /api/v1/user/verify_forget_password_otp
+ * @method_type : get
  * @Desc : For sending OTP to email and storing same in redis
  * 
  */
@@ -273,6 +280,7 @@ const verify_forget_password_otp = async_handler(async (req: Request, res: Respo
  * 
  * @name : change_password_with_secret
  * @route : /api/v1/user/change_password_with_secret
+ * @method_type : post
  * @Desc : For changing password on the basis of {forgot_pass_secret}
  * 
  */

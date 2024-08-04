@@ -7,3 +7,7 @@
     background: #eae5e5;
     border-radius: 15px 45px 30px 35px !important;
 }
+
+.link:hover {
+    color: rgb(27, 36, 218) !important;
+}

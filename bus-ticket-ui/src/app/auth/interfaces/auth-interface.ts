@@ -1,7 +1,7 @@
 import { ApiResult } from "../../common/interfaces/common-interface";
 
 
-export interface AuthCookie {
+interface AuthCookie {
     user_id: number,
     user_type: string,
     refresh_token: string,
@@ -9,24 +9,37 @@ export interface AuthCookie {
 }
 
 
-export interface SignInResponse extends ApiResult {
+interface SignInResponse extends ApiResult {
     data: AuthCookie
 }
 
 
-export interface VoidResult204 extends ApiResult {
+interface VoidResult204 extends ApiResult {
     data: {}
 }
 
 
-export interface VerifyForgetPasswordOtp extends ApiResult {
+interface VerifyForgetPasswordOtp extends ApiResult {
     data: {
         forgot_pass_secret: string
     }
 }
 
 
-export interface SignInUser {
+interface SignInUser {
     user_email: string,
     password: string
 }
+
+
+interface SignUpUser {
+    user_first_name: string,
+    user_type: string,
+    user_last_name: string,
+    user_email: string,
+    user_phone: string,
+    password: string
+}
+
+
+export { AuthCookie, SignInResponse, VoidResult204, VerifyForgetPasswordOtp, SignInUser, SignUpUser };

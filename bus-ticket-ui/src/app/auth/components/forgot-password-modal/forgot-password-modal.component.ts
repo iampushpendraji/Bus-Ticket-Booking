@@ -20,6 +20,8 @@ export class ForgotPasswordModalComponent implements OnInit {
   modalFor = signal<string>("get-user-email");
   isLoading = signal<boolean>(false);
   OTPTimeOut = signal<number>(120);
+  showNewPassword = signal<boolean>(false);
+  showConfirmNewPassword = signal<boolean>(false);
 
   _authApiService = inject(AuthApiService);
   _dataTransferService = inject(DataTransferService);
@@ -34,7 +36,6 @@ export class ForgotPasswordModalComponent implements OnInit {
     let formOptions: AbstractControlOptions = {
       validators: this.passwordMatch('new_password', 'confirm_new_password')
     }
-
 
     this.forgotPasswordForm = new FormGroup({
       forgotPasswordEmail: new FormControl('', [Validators.required, Validators.pattern(/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$/i)]),
@@ -65,6 +66,8 @@ export class ForgotPasswordModalComponent implements OnInit {
     this.OTPTimeOut.set(120);
     this.OTPExpireIntervalFn(false);
     this.isLoading.set(false);
+    this.showNewPassword.set(false);
+    this.showConfirmNewPassword.set(false);
   }
 
 
