@@ -1,0 +1,99 @@
+<div id="sign-up-wrapper" class="d-flex align-items-center justify-content-center h-100">
+    <form #sign_in_form="ngForm" (ngSubmit)="onSubmitSignUp(sign_in_form)" id="sign-up-form" class="w-lg-25 border p-3 p-lg-5 shadow shadow-sm rounded">
+        <h2 class="mb-4">Sign Up</h2>
+
+        <div class="d-flex gap-2">
+            <!-- user_first_name form control -->
+            <div class="mb-3 flex-fill">
+                <label for="user-name" class="form-label">First Name</label>
+                <input type="text" ngModel #user_first_name="ngModel" name="user_first_name" class="form-control" id="user-name" [required]="true"
+                    [ngClass]="( user_first_name.dirty || user_first_name.touched ) && ( user_first_name?.hasError('required') ) ? 'is-invalid' : ''"
+                    />
+            </div>
+    
+            <!-- user_last_name form control -->
+            <div class="mb-3 flex-fill">
+                <label for="user-last-name" class="form-label">Last Name</label>
+                <input type="text" ngModel #user_last_name="ngModel" name="user_last_name" class="form-control" id="user-last-name" [required]="true"
+                    [ngClass]="( user_last_name.dirty || user_last_name.touched ) && ( user_last_name?.hasError('required') ) ? 'is-invalid' : ''"
+                    />
+            </div>       
+        </div>
+
+
+        <div class="d-flex gap-2">
+
+            <!-- user_email form control -->
+            <div class="mb-3 flex-fill">
+                <label for="user-email" class="form-label">Email address</label>
+                <input type="email" ngModel #user_email="ngModel" name="user_email" class="form-control" id="user-email" [required]="true"
+                    [ngClass]="( user_email.dirty || user_email.touched ) && ( user_email?.hasError('required') || user_email?.hasError('pattern') ) ? 'is-invalid' : ''"
+                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
+                    />
+                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+            </div>
+
+            <!-- user_type form control -->
+            <div class="mb-3 flex-fill">
+                <label for="user-type" class="form-label">User Type</label>
+                <select id="user-type" ngModel #user_type="ngModel" name="user_type" class="form-select" aria-label="Default select example" [required]="true"
+                    [ngClass]="( user_type.dirty || user_type.touched ) && ( user_type?.hasError('required') ) ? 'is-invalid' : ''"
+                    >
+                    <option selected value="">Select user type</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                </select>
+            </div>
+
+        </div>
+            
+
+       <!-- user_phone form control -->
+       <div class="mb-3">
+        <label for="user-phone-number" class="form-label">Phone Number</label>
+        <input type="text" ngModel #user_phone="ngModel" name="user_phone" class="form-control" id="user-phone-number" [required]="true"
+            [ngClass]="( user_phone.dirty || user_phone.touched ) && ( user_phone?.hasError('required') ) ? 'is-invalid' : ''"
+            />
+        </div>          
+
+
+        <!-- password form control -->
+        <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-group mb-3">
+                 <input [type]="!showPassword() ? 'password' : 'text'" ngModel #password="ngModel" name="password" class="form-control" id="password" [required]="true" 
+                     [ngClass]="( password.dirty || password.touched ) && password?.hasError('required') ? 'is-invalid' : ''"
+                     />
+                     <span class="input-group-text" (click)="showPassword.set(!showPassword())">
+                         @if(!showPassword()) { <i class="bi bi-eye-fill"></i> }
+                         @else { <i class="bi bi-eye-slash-fill"></i> }
+                     </span>
+             </div>
+         </div>
+
+        
+        <!-- remember me form control -->
+        <div class="mb-2 d-flex">
+            <!-- <div>
+                <input type="checkbox" ngModel #remember_me="ngModel" name="remember_me" class="form-check-input" id="remember-me" 
+                    [ngClass]="( remember_me.dirty || remember_me.touched ) && remember_me?.hasError('required') ? 'is-invalid' : ''"
+                    />
+                <label class="form-check-label" for="remember-me">Remember me</label>
+            </div> -->
+            <div class="ms-auto">
+                <a routerLink="/sign-in" class="text-decoration-underline text-dark link">Already have an account ?</a>
+            </div>
+        </div>
+        
+        
+        <!-- Submit button -->
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading() || sign_in_form.invalid">
+            <span>Submit</span>
+            @if (isLoading()) {
+                <div class="spinner-border spinner-border-sm ms-2" role="status"><span class="visually-hidden">Loading...</span></div>
+            }
+        </button>
+
+    </form>
+
+</div>
