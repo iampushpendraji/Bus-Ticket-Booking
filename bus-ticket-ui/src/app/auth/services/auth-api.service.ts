@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
-import { VoidResult204, SignInResponse, SignInUser, VerifyForgetPasswordOtp } from '../interfaces/auth-interface';
+import { VoidResult204, SignInResponse, SignInUser, SignUpUser, VerifyForgetPasswordOtp } from '../interfaces/auth-interface';
 
 
 @Injectable({
@@ -40,9 +40,18 @@ export class AuthApiService {
   }
 
 
+  // For changing password with secret
   changePasswordWithSecret(obj: { user_email: string, new_password: string, forgot_pass_secret: string }): Observable<VoidResult204> {
     let url = `${environment.apiUrl}/api/${environment.apiVersion}/user/change_password_with_secret`;
     return this._http.post<VoidResult204>(url, obj);
   }
+
+
+  // For register user
+  register(register: SignUpUser): Observable<SignInResponse> {
+    let url = `${environment.apiUrl}/api/${environment.apiVersion}/user/register`;
+    return this._http.post<SignInResponse>(url, register);
+  }
+
 
 }
